@@ -1,0 +1,169 @@
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/Methions/AzureUilib/refs/heads/main/FluentUi"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Methions/AzureUilib/refs/heads/main/Config.SaveManager"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Methions/AzureUilib/refs/heads/main/Interface.Manager"))()
+local FloatingManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/Methions/AzureUilib/refs/heads/main/Button.MobileSupport"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "FluentModded",
+    SubTitle = "Vraigos",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(520, 420),
+    Acrylic = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+
+local MainTab = Window:AddTab({ Title = "Main", Icon = "home" })
+local SettingsTab = Window:AddTab({ Title = "Settings", Icon = "settings" })
+
+local BasicSection = MainTab:AddSection("Basic Controls")
+local AdvancedSection = MainTab:AddSection("Advanced")
+local InfoSection = MainTab:AddSection("Information")
+
+local MyToggle = BasicSection:AddToggle("MyToggle", {
+    Title = "Toggle",
+    Description = "Enable/disable your feature",
+    Default = false
+})
+MyToggle:OnChanged(function(value)
+    print("[Toggle] State:", value)
+end)
+
+local MySlider = BasicSection:AddSlider("MySlider", {
+    Title = "Slider",
+    Description = "Adjust a numeric value",
+    Default = 50,
+    Min = 0,
+    Max = 100,
+    Rounding = 1
+})
+MySlider:OnChanged(function(value)
+    print("[Slider] Value:", value)
+end)
+
+local MyInput = BasicSection:AddInput("MyInput", {
+    Title = "Input",
+    Description = "Enter text or number",
+    Default = "Hello",
+    Placeholder = "Type here...",
+    Numeric = false,
+    Finished = false
+})
+MyInput:OnChanged(function(value)
+    print("[Input] Text:", value)
+end)
+
+local MyDropdown = AdvancedSection:AddDropdown("MyDropdown", {
+    Title = "Dropdown",
+    Description = "Select one option",
+    Values = { "Option A", "Option B", "Option C" },
+    Default = "Option A",
+    Multi = false
+})
+MyDropdown:OnChanged(function(value)
+    print("[Dropdown] Selected:", value)
+end)
+
+local MyColorpicker = AdvancedSection:AddColorpicker("MyColorpicker", {
+    Title = "Colorpicker",
+    Description = "Pick a color",
+    Default = Color3.fromRGB(255, 0, 0),
+    Transparency = 0
+})
+MyColorpicker:OnChanged(function(color)
+    print("[Colorpicker] RGB:", color.R, color.G, color.B)
+end)
+
+local MyKeybind = AdvancedSection:AddKeybind("MyKeybind", {
+    Title = "Keybind",
+    Description = "Press a key to toggle something",
+    Default = "LeftAlt",
+    Mode = "Toggle"
+})
+MyKeybind:OnClick(function(toggled)
+    print("[Keybind] Toggled:", toggled)
+end)
+
+local MyButton = AdvancedSection:AddButton({
+    Title = "Button",
+    Description = "Click to execute action",
+    Callback = function()
+        Fluent:Notify({ Title = "Button", Content = "Action executed!", Duration = 3 })
+    end
+})
+
+InfoSection:AddParagraph({
+    Title = "Information",
+    Content = "Complete Fluent UI example with SaveManager.\nMinimize button works on mobile/PC."
+})
+
+local function SafeMinimize()
+    if Window and Window.Minimize then
+        Window:Minimize()
+    elseif Fluent and Fluent.GUI then
+        Fluent.GUI.Visible = not Fluent.GUI.Visible
+    end
+end
+
+local OpenGui = Instance.new("ScreenGui")
+OpenGui.Name = "OpenUI"
+OpenGui.ResetOnSpawn = false
+OpenGui.Parent = game:GetService("CoreGui")
+
+local OpenBtn = Instance.new("ImageButton")
+OpenBtn.Size = UDim2.fromOffset(55, 55)
+OpenBtn.Position = UDim2.new(0.02, 0, 0.85, 0)
+OpenBtn.BackgroundColor3 = Color3.fromRGB(105, 105, 105)
+OpenBtn.BackgroundTransparency = 0.5
+OpenBtn.Image = "rbxassetid://"
+OpenBtn.Parent = OpenGui
+
+Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0.2, 0)
+
+local dragActive, dragStart, startPos
+OpenBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragActive = true
+        dragStart = input.Position
+        startPos = OpenBtn.Position
+    end
+end)
+OpenBtn.InputChanged:Connect(function(input)
+    if dragActive and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        OpenBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+game:GetService("UserInputService").InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragActive = false
+    end
+end)
+
+OpenBtn.MouseButton1Click:Connect(SafeMinimize)
+
+SettingsTab:AddButton({
+    Title = "Minimize / Restore Window",
+    Description = "Tap to hide/show the main UI",
+    Callback = SafeMinimize
+})
+
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+FloatingManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+InterfaceManager:SetFolder("PlaceHolderHub")
+SaveManager:SetFolder("PlaceHolderHub/Config")
+FloatingManager:SetFolder("PlaceHolderHub")
+InterfaceManager:BuildInterfaceSection(SettingsTab)
+SaveManager:BuildConfigSection(SettingsTab)
+FloatingManager:BuildConfigSection(SettingsTab)
+SaveManager:LoadAutoloadConfig()
+
+Fluent:Notify({
+    Title = "FluentModded",
+    Content = "UI loaded. Settings tab now has save manager.",
+    Duration = 5
+})
+
+Window:SelectTab(1)
